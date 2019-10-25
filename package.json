@@ -1,0 +1,15 @@
+{
+  "name": "vuecx",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/JaneGroup/vuec.git"
+  },
+  "author": "qinuoyun",
+  "license": "ISC"
+}
