@@ -1,11 +1,10 @@
 /*
  * @Author: qinuoyun
  * @Date:   2019-10-23 18:45:54
- * @Last Modified by:   sean
- * @Last Modified time: 2019-10-25 14:20:39
+ * @Last Modified by:   qinuoyun
+ * @Last Modified time: 2019-10-25 14:42:55
  */
 import Vue from 'vue'
-
 
 let uuid = 1;
 
@@ -127,12 +126,15 @@ function registerMutation(store, type, handler, local) {
  *  状态管理类
  */
 class Store {
-  //构造函数
+  /**
+   * 构造函数
+   * @param  {[type]} options [description]
+   * @return {[type]}         [description]
+   */
   constructor(options) {
     this.install(options);
     uuid++;
   }
-
   install(options) {
     _options = options;
     vuecx[uuid] = {
@@ -144,6 +146,13 @@ class Store {
 }
 
 
+/**
+ * 状态地图
+ * @param  {[type]} namespace [description]
+ * @param  {Object} states)   {                 var res [description]
+ * @param  {[type]} set:      function(value) {                           let $root [description]
+ * @return {[type]}           [description]
+ */
 export const mapState = normalizeNamespace(function(namespace, states) {
   var res = {};
   normalizeMap(states).forEach(function(ref) {

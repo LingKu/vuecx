@@ -2,18 +2,8 @@
 
 ### 直接下载 / CDN 引用
 
-[https://unpkg.com/vuex](https://unpkg.com/vuex)
+[https://github.com/LingKu/vuecx.git](https://github.com/LingKu)
 
-<!--email_off-->
-[Unpkg.com](https://unpkg.com) 提供了基于 NPM 的 CDN 链接。以上的链接会一直指向 NPM 上发布的最新版本。您也可以通过 `https://unpkg.com/vuex@2.0.0` 这样的方式指定特定的版本。
-<!--/email_off-->
-
-在 Vue 之后引入 `vuex` 会进行自动安装：
-
-``` html
-<script src="/path/to/vue.js"></script>
-<script src="/path/to/vuex.js"></script>
-```
 
 ### NPM
 
@@ -21,8 +11,15 @@
 npm install vuex --save
 ```
 
+VUECX 和VUEX的区别是啥 VUEX是全局的状态管理 而VUECX是专门用来管理组件的状态管理器 当然VUEX也可以管理组件状态 但是却别是什么 
+区别在于 如果一个组件 复用的时候 那么状态数据无法分开了 
 
-在一个模块化的打包系统中，您必须显式地通过 `Vue.use()` 来安装 Vuex：
+假设 组件A包含了组件b包含了组件c 即：A<-b<-c
+
+在页面用 调用两次 组件A 分别A’ A‘’  在VUEX的情况下 里面的状态数据是一样 A‘ 数据修改 A’‘ 数据也会修改
+
+如果使用VUECX 就可以把数据独立出来 复用组件 只会在A b c中数据状态被修改 而不会 影响到A’‘
+
 
 ``` js
 const state = {
