@@ -2,7 +2,7 @@
  * @Author: qinuoyun
  * @Date:   2019-10-23 18:45:54
  * @Last Modified by:   qinuoyun
- * @Last Modified time: 2019-10-25 14:42:55
+ * @Last Modified time: 2019-10-29 17:25:06
  */
 import Vue from 'vue'
 
@@ -116,7 +116,6 @@ const common = function(argument) {
 function registerMutation(store, type, handler, local) {
   var entry = store._mutations[type] || (store._mutations[type] = []);
   entry.push(function wrappedMutationHandler(payload) {
-    console.log("注册方法", [store, local.state, payload, handler]);
     handler.call(store, local.state, payload);
   });
 }
@@ -169,7 +168,6 @@ export const mapState = normalizeNamespace(function(namespace, states) {
       set: function(value) {
         let $root = common(this);
         var state = $root.vuecx.state;
-        console.log("更改", $root);
         return value;
       }
     };
@@ -187,7 +185,7 @@ export const mapState = normalizeNamespace(function(namespace, states) {
  */
 function commit(_type, _payload, _options) {
   var this$1 = this;
-  console.log("this", this);
+
   // check object-style commit
   var ref = unifyObjectStyle(_type, _payload, _options);
   var type = ref.type;
@@ -234,11 +232,6 @@ export const mapMutations = normalizeNamespace(function(namespace, mutations) {
 
       let $root = common(this);
 
-      //console.log("len", this);
-
-      // // Get the commit method from store
-      // var commit = this.$store.commit;
-
       return typeof val === 'function' ?
         val.apply(this, [commit].concat(args)) :
         commit.apply($root.vuecx, [val].concat(args)) //如果不是函数执行
@@ -253,7 +246,7 @@ export const mapMutations = normalizeNamespace(function(namespace, mutations) {
  * @return {[type]}     [description]
  */
 export const bootstrap = function(vue) {
-  let newState = JSON.parse(JSON.stringify(_options.state));
+  let newState = Object.assign({}, _options.state);
   let store = {
     state: Vue.observable(newState),
     _mutations: []
@@ -261,7 +254,6 @@ export const bootstrap = function(vue) {
   for (let i in _options.mutations) {
     let item = _options.mutations[i];
     let name = item.name;
-    //console.log("item", item.name);
     //用于注册修改方法，实现 (state, height) state表示当前状态 height为传参
     registerMutation(store, name, _options.mutations[name], store);
   }
