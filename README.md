@@ -4,13 +4,11 @@
 
 [https://github.com/LingKu/vuecx.git](https://github.com/LingKu)
 
-联系微信：qinuosc 联系QQ：990582569 邀请码：CR1023
-
 
 ### NPM
 
 ``` bash
-npm install vuecx --save
+npm install vuex --save
 ```
 
 VUECX 和VUEX的区别是啥 VUEX是全局的状态管理 而VUECX是专门用来管理组件的状态管理器 当然VUEX也可以管理组件状态 但是却别是什么 

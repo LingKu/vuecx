@@ -1,8 +1,8 @@
 /*
  * @Author: qinuoyun
  * @Date:   2019-10-23 18:45:54
- * @Last Modified by:   Sean
- * @Last Modified time: 2019-10-27 22:47:31
+ * @Last Modified by:   qinuoyun
+ * @Last Modified time: 2019-10-25 14:42:55
  */
 import Vue from 'vue'
 
@@ -14,11 +14,6 @@ let _options = {};
 
 let ROOT = [];
 
-/**
- * 判断对象
- * @param  {[type]}  obj [description]
- * @return {Boolean}     [description]
- */
 function isObject(obj) {
   return obj !== null && typeof obj === 'object'
 }
@@ -26,12 +21,7 @@ function isObject(obj) {
 function assert(condition, msg) {
   if (!condition) { throw new Error(("[vuex] " + msg)) }
 }
-/**
- * 循环执行
- * @param  {[type]}   obj [description]
- * @param  {Function} fn  [description]
- * @return {[type]}       [description]
- */
+
 function forEachValue(obj, fn) {
   Object.keys(obj).forEach(function(key) { return fn(obj[key], key); });
 }
