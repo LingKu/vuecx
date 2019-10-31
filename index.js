@@ -2,8 +2,13 @@
  * @Author: qinuoyun
  * @Date:   2019-10-23 18:45:54
  * @Last Modified by:   qinuoyun
- * @Last Modified time: 2019-10-29 17:25:06
+ * @Last Modified time: 2019-10-31 17:57:45
  */
+
+ /**
+  * 更新日志
+  * 1.0.7 修正了在顶级组件下无法使用mapMutations的问题
+  */
 import Vue from 'vue'
 
 let uuid = 1;
@@ -94,6 +99,9 @@ function isInArray(arr, value) {
  */
 const common = function(argument) {
   let lists = Object.keys(ROOT);
+  if (isInArray(lists, String(argument._uid))) {
+    return argument;
+  }
   let _parent = argument.$parent;
   if (_parent) {
     if (isInArray(lists, String(_parent._uid))) {
@@ -264,5 +272,5 @@ export const bootstrap = function(vue) {
 
 export default {
   Store: Store,
-  version: '1.0.0'
+  version: '1.0.7'
 };

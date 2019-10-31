@@ -2,7 +2,7 @@
 
 ### 直接下载 / CDN 引用
 
-[https://github.com/LingKu/vuecx.git](https://github.com/LingKu)
+[https://github.com/LingKu/vuecx.git](https://github.com/LingKu/vuecx.git)
 
 
 ### NPM
