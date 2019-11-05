@@ -2,13 +2,8 @@
  * @Author: qinuoyun
  * @Date:   2019-10-23 18:45:54
  * @Last Modified by:   qinuoyun
- * @Last Modified time: 2019-10-31 17:57:45
+ * @Last Modified time: 2019-11-05 16:28:36
  */
-
- /**
-  * 更新日志
-  * 1.0.7 修正了在顶级组件下无法使用mapMutations的问题
-  */
 import Vue from 'vue'
 
 let uuid = 1;
@@ -23,8 +18,24 @@ function isObject(obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+function isPromise(val) {
+  return val && typeof val.then === 'function'
+}
+
 function assert(condition, msg) {
-  if (!condition) { throw new Error(("[vuex] " + msg)) }
+  if (!condition) { throw new Error(("[vuecx] " + msg)) }
+}
+
+function genericSubscribe(fn, subs) {
+  if (subs.indexOf(fn) < 0) {
+    subs.push(fn);
+  }
+  return function() {
+    var i = subs.indexOf(fn);
+    if (i > -1) {
+      subs.splice(i, 1);
+    }
+  }
 }
 
 function forEachValue(obj, fn) {
@@ -129,6 +140,31 @@ function registerMutation(store, type, handler, local) {
 }
 
 
+function registerAction(store, type, handler, local) {
+  var entry = store._actions[type] || (store._actions[type] = []);
+  entry.push(function wrappedActionHandler(payload, cb) {
+    var res = handler.call(store, {
+      dispatch: local.dispatch,
+      commit: local.commit,
+      state: local.state,
+    }, payload, cb);
+
+    if (!isPromise(res)) {
+      res = Promise.resolve(res);
+    }
+    if (store._devtoolHook) {
+      return res.catch(function(err) {
+        store._devtoolHook.emit('vuex:error', err);
+        throw err
+      })
+    } else {
+      return res
+    }
+  });
+}
+
+
+
 /**
  *  状态管理类
  */
@@ -146,7 +182,8 @@ class Store {
     _options = options;
     vuecx[uuid] = {
       state: Vue.observable(options.state),
-      mutations: options.mutations
+      mutations: options.mutations,
+      actions: options.actions
     };
   }
 
@@ -201,21 +238,77 @@ function commit(_type, _payload, _options) {
   var options = ref.options;
 
   var mutation = { type: type, payload: payload };
+
   var entry = this._mutations[type];
 
   if (!entry) {
     {
-      console.error(("[vuex] unknown mutation type: " + type));
+      console.error(("[vuecx] unknown mutation type: " + type));
     }
     return
   }
   _withCommit(function() {
     entry.forEach(function commitIterator(handler) {
-      //console.log("handler",handler);
       handler(payload);
     });
   });
 }
+
+function subscribeAction(fn) {
+  var subs = typeof fn === 'function' ? { before: fn } : fn;
+  return genericSubscribe(subs, this._actionSubscribers)
+}
+
+
+function dispatch(_type, _payload) {
+  var this$1 = this;
+
+  // check object-style dispatch
+  var ref = unifyObjectStyle(_type, _payload);
+  var type = ref.type;
+  var payload = ref.payload;
+
+  var action = { type: type, payload: payload };
+  console.log("this", this);
+
+  var entry = this._actions[type];
+  if (!entry) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(("[vuecx] unknown action type: " + type));
+    }
+    return
+  }
+
+  try {
+    this._actionSubscribers
+      .filter(function(sub) { return sub.before; })
+      .forEach(function(sub) { return sub.before(action, this$1.state); });
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn("[vuecx] error in before action subscribers: ");
+      console.error(e);
+    }
+  }
+
+  var result = entry.length > 1 ?
+    Promise.all(entry.map(function(handler) { return handler(payload); })) :
+    entry[0](payload);
+
+  return result.then(function(res) {
+    try {
+      this$1._actionSubscribers
+        .filter(function(sub) { return sub.after; })
+        .forEach(function(sub) { return sub.after(action, this$1.state); });
+    } catch (e) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn("[vuecx] error in after action subscribers: ");
+        console.error(e);
+      }
+    }
+    return res
+  })
+}
+
 
 /**
  * 只是为了执行事件
@@ -227,6 +320,14 @@ function _withCommit(fn) {
 }
 
 
+
+
+/**
+ * 执行Mutations
+ * @param  {[type]} namespace  [description]
+ * @param  {Object} mutations) {             var res [description]
+ * @return {[type]}            [description]
+ */
 export const mapMutations = normalizeNamespace(function(namespace, mutations) {
   var res = {};
   normalizeMap(mutations).forEach(function(ref) {
@@ -249,6 +350,35 @@ export const mapMutations = normalizeNamespace(function(namespace, mutations) {
 });
 
 /**
+ * 执行mapActions
+ * @param  {[type]} namespace [description]
+ * @param  {Object} actions)  {             var res [description]
+ * @return {[type]}           [description]
+ */
+export const mapActions = normalizeNamespace(function(namespace, actions) {
+  var res = {};
+  normalizeMap(actions).forEach(function(ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedAction() {
+      var args = [],
+        len = arguments.length;
+      while (len--) args[len] = arguments[len];
+
+      let $root = common(this);
+
+
+      return typeof val === 'function' ?
+        val.apply(this, [dispatch].concat(args)) :
+        dispatch.apply($root.vuecx, [val].concat(args))
+    };
+  });
+  return res
+});
+
+
+/**
  * 初始化注册
  * @param  {[type]} vue [description]
  * @return {[type]}     [description]
@@ -257,7 +387,16 @@ export const bootstrap = function(vue) {
   let newState = Object.assign({}, _options.state);
   let store = {
     state: Vue.observable(newState),
-    _mutations: []
+    dispatch: function boundDispatch(type, payload) {
+      return dispatch.call(store, type, payload)
+    },
+    commit: function boundCommit(type, payload, options) {
+      return commit.call(store, type, payload, options)
+    },
+    _mutations: [],
+    _actions: [],
+    _actionSubscribers: [],
+
   }
   for (let i in _options.mutations) {
     let item = _options.mutations[i];
@@ -266,11 +405,20 @@ export const bootstrap = function(vue) {
     registerMutation(store, name, _options.mutations[name], store);
   }
 
+  for (let e in _options.actions) {
+    let item = _options.actions[e];
+    let name = item.name;
+    //用于注册修改方法，实现 (state, height) state表示当前状态 height为传参
+    registerAction(store, name, _options.actions[name], store);
+  }
+
+
+
   vue.vuecx = store;
   ROOT[vue._uid] = vue;
 }
 
 export default {
   Store: Store,
-  version: '1.0.7'
+  version: '1.0.8'
 };

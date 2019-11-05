@@ -11,6 +11,8 @@
 npm install vuex --save
 ```
 
+1.0.8 新增了actions操作以及相关函数mapActions
+
 VUECX 和VUEX的区别是啥 VUEX是全局的状态管理 而VUECX是专门用来管理组件的状态管理器 当然VUEX也可以管理组件状态 但是却别是什么 
 区别在于 如果一个组件 复用的时候 那么状态数据无法分开了 
 
